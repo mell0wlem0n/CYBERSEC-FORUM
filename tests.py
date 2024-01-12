@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 import unittest
 from app import create_app, db
 from app.models import User, Post
@@ -25,7 +25,7 @@ class UserModelCase(unittest.TestCase):
         self.app_context.pop()
 
     def test_password_hashing(self):
-        u = User(username='susan')
+        u = User(username='susan', email='susan@example.com')
         u.set_password('cat')
         self.assertFalse(u.check_password('dog'))
         self.assertTrue(u.check_password('cat'))
@@ -42,22 +42,26 @@ class UserModelCase(unittest.TestCase):
         db.session.add(u1)
         db.session.add(u2)
         db.session.commit()
-        self.assertEqual(u1.followed.all(), [])
-        self.assertEqual(u1.followers.all(), [])
+        following = db.session.scalars(u1.following.select()).all()
+        followers = db.session.scalars(u2.followers.select()).all()
+        self.assertEqual(following, [])
+        self.assertEqual(followers, [])
 
         u1.follow(u2)
         db.session.commit()
         self.assertTrue(u1.is_following(u2))
-        self.assertEqual(u1.followed.count(), 1)
-        self.assertEqual(u1.followed.first().username, 'susan')
-        self.assertEqual(u2.followers.count(), 1)
-        self.assertEqual(u2.followers.first().username, 'john')
+        self.assertEqual(u1.following_count(), 1)
+        self.assertEqual(u2.followers_count(), 1)
+        u1_following = db.session.scalars(u1.following.select()).all()
+        u2_followers = db.session.scalars(u2.followers.select()).all()
+        self.assertEqual(u1_following[0].username, 'susan')
+        self.assertEqual(u2_followers[0].username, 'john')
 
         u1.unfollow(u2)
         db.session.commit()
         self.assertFalse(u1.is_following(u2))
-        self.assertEqual(u1.followed.count(), 0)
-        self.assertEqual(u2.followers.count(), 0)
+        self.assertEqual(u1.following_count(), 0)
+        self.assertEqual(u2.followers_count(), 0)
 
     def test_follow_posts(self):
         # create four users
@@ -68,7 +72,7 @@ class UserModelCase(unittest.TestCase):
         db.session.add_all([u1, u2, u3, u4])
 
         # create four posts
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         p1 = Post(body="post from john", author=u1,
                   timestamp=now + timedelta(seconds=1))
         p2 = Post(body="post from susan", author=u2,
@@ -87,11 +91,11 @@ class UserModelCase(unittest.TestCase):
         u3.follow(u4)  # mary follows david
         db.session.commit()
 
-        # check the followed posts of each user
-        f1 = u1.followed_posts().all()
-        f2 = u2.followed_posts().all()
-        f3 = u3.followed_posts().all()
-        f4 = u4.followed_posts().all()
+        # check the following posts of each user
+        f1 = db.session.scalars(u1.following_posts()).all()
+        f2 = db.session.scalars(u2.following_posts()).all()
+        f3 = db.session.scalars(u3.following_posts()).all()
+        f4 = db.session.scalars(u4.following_posts()).all()
         self.assertEqual(f1, [p2, p4, p1])
         self.assertEqual(f2, [p2, p3])
         self.assertEqual(f3, [p3, p4])

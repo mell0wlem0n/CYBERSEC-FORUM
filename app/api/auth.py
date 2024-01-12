@@ -1,4 +1,6 @@
+import sqlalchemy as sa
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
+from app import db
 from app.models import User
 from app.api.errors import error_response
 
@@ -8,7 +10,7 @@ token_auth = HTTPTokenAuth()
 
 @basic_auth.verify_password
 def verify_password(username, password):
-    user = User.query.filter_by(username=username).first()
+    user = db.session.scalar(sa.select(User).where(User.username == username))
     if user and user.check_password(password):
         return user
 
