@@ -5,6 +5,7 @@ from flask import render_template, flash, redirect, url_for, request, g, \
 from flask_login import current_user, login_required
 from flask_babel import _, get_locale
 import sqlalchemy as sa
+from app.main.forms import FileField
 from langdetect import detect, LangDetectException
 
 import app
@@ -103,19 +104,20 @@ def edit_profile():
     if form.validate_on_submit():
         current_user.username = form.username.data
         current_user.about_me = form.about_me.data
-        if request.files['profile_picture'] != "":
+        if(request.files['profile_picture'].filename != ""):
             current_user.profile_picture = request.files['profile_picture']
-            pic_filename = secure_filename(request.files['profile_picture'].filename)
-            pic_name = str(uuid.uuid1())+ "_" + pic_filename
+            pic_filename = secure_filename(current_user.profile_picture.filename)
+            pic_name = str(uuid.uuid1()) + "_" + pic_filename
             saver = request.files['profile_picture']
+            current_user.profile_picture = pic_name
             saver.save(os.path.join(current_app.config['UPLOAD_FOLDER'], pic_name))
-            current_user.profile_picture = current_app.config['UPLOAD_FOLDER'][3:] + "/" + pic_name
         db.session.commit()
         flash(_('Your changes have been saved.'))
         return redirect(url_for('main.user', username=current_user.username))
     elif request.method == 'GET':
         form.username.data = current_user.username
         form.about_me.data = current_user.about_me
+        form.profile_picture.data = current_user.profile_picture
     return render_template('edit_profile.html', title=_('Edit Profile'),
                            form=form)
 
