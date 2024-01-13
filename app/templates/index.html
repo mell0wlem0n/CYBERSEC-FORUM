@@ -1,11 +1,25 @@
 {% extends "base.html" %}
 {% import "bootstrap_wtf.html" as wtf %}
 
+
 {% block content %}
+    <style>
+        #cke_post{
+
+                background-color: black;
+                border: 1px solid;
+
+
+        }
+    </style>
+    <script src="//cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
     <h1>{{ _('Hi, %(username)s!', username=current_user.username) }}</h1>
     {% if form %}
-    {{ wtf.quick_form(form) }}
+        {{ wtf.quick_form(form) }}
+        <script>CKEDITOR.replace('post')</script>
     {% endif %}
+    <br>
+    <br>
     {% for post in posts %}
         {% include '_post.html' %}
     {% endfor %}
@@ -23,4 +37,7 @@
             </li>
         </ul>
     </nav>
+
+
+
 {% endblock %}

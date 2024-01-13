@@ -101,6 +101,7 @@ class User(PaginatedAPIMixin, UserMixin, db.Model):
                                                 unique=True)
     email: so.Mapped[str] = so.mapped_column(sa.String(120), index=True,
                                              unique=True)
+    profile_picture: so.Mapped[str] = so.mapped_column(sa.String(), nullable=True)
     password_hash: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
     about_me: so.Mapped[Optional[str]] = so.mapped_column(sa.String(140))
     last_seen: so.Mapped[Optional[datetime]] = so.mapped_column(
@@ -135,6 +136,9 @@ class User(PaginatedAPIMixin, UserMixin, db.Model):
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
+
+    def set_profile_picture(self, picture):
+        self.profile_picture = picture
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
@@ -184,6 +188,7 @@ class User(PaginatedAPIMixin, UserMixin, db.Model):
         return jwt.encode({'confirm_email': self.email, 'exp': time() + expires_in}, current_app.config['SECRET_KEY'],
                           algorithm='HS256')
 
+
     @staticmethod
     def verify_confirm_token(token):
         try:
@@ -191,8 +196,6 @@ class User(PaginatedAPIMixin, UserMixin, db.Model):
         except Exception:
             return False
         return email
-
-
 
     def get_reset_password_token(self, expires_in=600):
         return jwt.encode(

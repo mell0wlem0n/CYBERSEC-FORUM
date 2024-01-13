@@ -27,6 +27,7 @@ def login():
             return redirect(url_for('auth.login'))
         if not user.confirmed:
             flash(_('Please confirm your account to access the website! Check your email for the link!'))
+            return redirect(url_for('auth.login'))
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
         if not next_page or urlsplit(next_page).netloc != '':

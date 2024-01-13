@@ -2,7 +2,7 @@
     <tr>
         <td width="70px">
             <a href="{{ url_for('main.user', username=post.author.username) }}">
-                <img src="{{ post.author.avatar(70) }}"/>
+                <img src="{{ post.author.profile_picture }}" style="border-radius: 50%; height: 70px;width: 70px"/>
             </a>
         </td>
         <td>
@@ -14,7 +14,7 @@
             {{ _('%(username)s said %(when)s',
                     username=user_link, when=moment(post.timestamp).fromNow()) }}
             <br>
-            <span id="post{{ post.id }}">{{ post.body }}</span>
+            <span id="post{{ post.id }}">{{ post.body|safe }}</span>
             {% if post.language and post.language != g.locale %}
                 <br><br>
                 <span id="translation{{ post.id }}">
@@ -25,19 +25,14 @@
                                 '{{ g.locale }}');">{{ _('Translate') }}</a>
                 </span>
             {% endif %}
+<br>
+    {% if post.user_id == current_user.id %}
 
-        </td>
-        <td>
+                <button style="border-radius: 10px; margin-top: 20px"><a class="page-link"
+                                                                         href="{{ url_for('main.delete_post',post_id=post.id) }}">Delete
+                    post</a></button>
 
+    {% endif %}
         </td>
-        <td>
-
-        </td>
-        <td></td>
-        {% if post.user_id == current_user.id %}
-            <td>
-                <button style="border-radius: 10px; margin-top: 20px"><a class="page-link" href="{{ url_for('main.delete_post',post_id=post.id) }}">Delete post</a></button>
-            </td>
-        {% endif %}
     </tr>
 </table>
