@@ -36,9 +36,13 @@ class RegistrationForm(FlaskForm):
             raise ValidationError(_('Please use a different email address.'))
 
 
+
+
 class ResetPasswordRequestForm(FlaskForm):
     email = StringField(_l('Email'), validators=[DataRequired(), Email()])
     submit = SubmitField(_l('Request Password Reset'))
+
+
 
 
 class ResetPasswordForm(FlaskForm):
@@ -47,3 +51,4 @@ class ResetPasswordForm(FlaskForm):
         _l('Repeat Password'), validators=[DataRequired(),
                                            EqualTo('password')])
     submit = SubmitField(_l('Request Password Reset'))
+

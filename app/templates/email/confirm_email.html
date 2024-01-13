@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<body>
+<p>Dear {{ user.username }},</p>
+<p>
+    To confirm your email
+    <a
+            href="{{ url_for('auth.confirm', token=token, _external=True) }}"
+    >
+        click here </a
+    >.
+</p>
+<p>
+    Alternatively, you can paste the following link in your browser's address
+    bar:
+</p>
+<p>{{ url_for('auth.confirm', token=token, _external=True) }}</p>
+<p>Sincerely,</p>
+<p>The CYBERSEC FORUM Team</p>
+</body>
+</html>

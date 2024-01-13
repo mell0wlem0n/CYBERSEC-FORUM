@@ -1,0 +1,8 @@
+Dear {{ user.username }},
+
+To confirm your email click on the following link:
+
+{{ url_for('auth.confirm', token=token, _external=True) }}
+Sincerely,
+
+The CYBERSEC FORUM Team

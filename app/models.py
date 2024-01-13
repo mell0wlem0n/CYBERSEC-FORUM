@@ -109,6 +109,8 @@ class User(PaginatedAPIMixin, UserMixin, db.Model):
     token: so.Mapped[Optional[str]] = so.mapped_column(
         sa.String(32), index=True, unique=True)
     token_expiration: so.Mapped[Optional[datetime]]
+    confirmed: so.Mapped[str] = so.mapped_column(sa.Boolean, nullable=False, default=False)
+    confirmed_on: so.Mapped[datetime] = so.mapped_column(sa.DATETIME, nullable=True)
 
     posts: so.WriteOnlyMapped['Post'] = so.relationship(
         back_populates='author')
@@ -173,10 +175,24 @@ class User(PaginatedAPIMixin, UserMixin, db.Model):
             .where(sa.or_(
                 Follower.id == self.id,
                 Author.id == self.id,
-                ))
+            ))
             .group_by(Post)
             .order_by(Post.timestamp.desc())
         )
+
+    def get_confirmation_token(self, expires_in=3600):
+        return jwt.encode({'confirm_email': self.email, 'exp': time() + expires_in}, current_app.config['SECRET_KEY'],
+                          algorithm='HS256')
+
+    @staticmethod
+    def verify_confirm_token(token):
+        try:
+            email = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])['confirm_email']
+        except Exception:
+            return False
+        return email
+
+
 
     def get_reset_password_token(self, expires_in=600):
         return jwt.encode(

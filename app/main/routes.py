@@ -129,6 +129,20 @@ def follow(username):
         return redirect(url_for('main.index'))
 
 
+@bp.route('/delete_post/<int:post_id>', methods=['GET', 'POST'])
+@login_required
+def delete_post(post_id):
+    post = db.session.scalar(sa.select(Post).where(Post.id == post_id))
+    if post is None:
+        flash(_('Post %(post_id)s not found.', post_id=post_id))
+        return redirect('main.index')
+    if post.user_id == current_user.id:
+        db.session.delete(post)
+        db.session.commit()
+    flash(_('Post %(post_id)s has been deleted.', post_id=post_id))
+    return redirect(url_for('main.index'))
+
+
 @bp.route('/unfollow/<username>', methods=['POST'])
 @login_required
 def unfollow(username):
