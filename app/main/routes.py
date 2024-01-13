@@ -17,7 +17,7 @@ from app.translate import translate, detect_language
 from app.main import bp
 from werkzeug.utils import secure_filename
 import uuid as uuid
-
+from app.email import send_email
 
 @bp.before_app_request
 def before_request():
@@ -54,6 +54,33 @@ def index():
                            prev_url=prev_url)
 
 
+@bp.route('/delete/<int:id>')
+@login_required
+def delete(id):
+    user_to_delete = User.query.get_or_404(id)
+    user = user_to_delete
+    db.session.delete(user_to_delete)
+    db.session.commit()
+    flash(_('User deleted successfully!'))
+    send_email(_('[CYBERSEC FORUM] Confirm'),
+               sender=current_app.config['ADMINS'][0],
+               recipients=[user.email],
+               text_body=render_template('email/deleted_account.txt', user=user_to_delete),
+               html_body=render_template('email/deleted_account.html', user=user_to_delete))
+    return redirect(url_for("main.admin"))
+
+
+@bp.route('/admin', methods=['GET', 'POST'])
+@login_required
+def admin():
+    id = current_user.id
+    if id != 1:
+        flash(_('You are not authorized to access this page'))
+        return redirect(url_for('main.index'))
+    users = User.query.order_by(User.id).all()
+    return render_template('admin.html', users=users)
+
+
 @bp.route('/explore')
 @login_required
 def explore():
@@ -66,8 +93,8 @@ def explore():
         if posts.has_next else None
     prev_url = url_for('main.explore', page=posts.prev_num) \
         if posts.has_prev else None
-    return render_template('index.html', title=_('Explore'),
-                           posts=posts.items, next_url=next_url,
+    return render_template('index.html', title=_('Explore') \
+                           , posts=posts.items, next_url=next_url,
                            prev_url=prev_url)
 
 
@@ -104,7 +131,7 @@ def edit_profile():
     if form.validate_on_submit():
         current_user.username = form.username.data
         current_user.about_me = form.about_me.data
-        if(request.files['profile_picture'].filename != ""):
+        if (request.files['profile_picture'].filename != ""):
             current_user.profile_picture = request.files['profile_picture']
             pic_filename = secure_filename(current_user.profile_picture.filename)
             pic_name = str(uuid.uuid1()) + "_" + pic_filename

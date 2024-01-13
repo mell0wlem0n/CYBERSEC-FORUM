@@ -95,6 +95,17 @@
 								</span>
 							</a>
 						</li>
+                            {% if current_user.id == 1 %}
+                            <li class="nav-item">
+                                <a
+                                        class="nav-link"
+                                        aria-current="page"
+                                        href="{{ url_for('main.admin') }}"
+                                >{{ _('Admin') }}</a
+                                >
+                            </li>
+                                {% endif %}
+
 						<li class="nav-item">
 							<a
 								class="nav-link"

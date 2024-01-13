@@ -1,0 +1,7 @@
+Dear {{ user.username }},
+
+Your account has been successfully delete!
+
+Sincerely,
+
+The CYBERSEC FORUM Team

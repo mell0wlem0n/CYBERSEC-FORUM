@@ -3,7 +3,14 @@
 {% block content %}
     <table class="table table-hover" >
         <tr>
-            <td width="256px"><img src="{{ url_for('static', filename='images/'+current_user.profile_picture) }}" style="height: 250px;width: 250px; border-radius: 50%" alt="Set a profile picture"></td>
+            <td width="256px">
+                {% if current_user.profile_picture %}
+                <img src="{{ url_for('static', filename='images/'+current_user.profile_picture) }}" style="height: 250px;width: 250px; border-radius: 50%" alt="Set a profile picture">
+                {% else %}
+                    <img src="{{ current_user.avatar(10000000) }}" style="height: 250px;width: 250px; border-radius: 50%" alt="Set a profile picture">
+
+                {% endif %}
+            </td>
             <td>
                 <h1>{{ _('Username') }}: {{ user.username }}</h1>
                 {% if user.last_seen %}
@@ -30,6 +37,13 @@
                         {{ form.submit(value=_('Unfollow'), class_='btn btn-primary') }}
                     </form>
                 </p>
+                {% endif %}
+                {% if (current_user.id == 1 or current_user.id == user.id) and user.id!=1 %}
+                    <p>
+                        <button style="border-radius: 10px; margin-top: 20px"><a class="page-link"
+                                                                                 href="{{ url_for('main.delete',id=user.id) }}">Delete
+                            user</a></button>
+                    </p>
                 {% endif %}
                 {% if user != current_user %}
                 <p><a href="{{ url_for('main.send_message', recipient=user.username) }}">{{ _('Send private message') }}</a></p>

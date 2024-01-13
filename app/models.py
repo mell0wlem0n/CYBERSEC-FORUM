@@ -114,22 +114,22 @@ class User(PaginatedAPIMixin, UserMixin, db.Model):
     confirmed_on: so.Mapped[datetime] = so.mapped_column(sa.DATETIME, nullable=True)
 
     posts: so.WriteOnlyMapped['Post'] = so.relationship(
-        back_populates='author')
+        back_populates='author', passive_deletes=True)
     following: so.WriteOnlyMapped['User'] = so.relationship(
         secondary=followers, primaryjoin=(followers.c.follower_id == id),
         secondaryjoin=(followers.c.followed_id == id),
-        back_populates='followers')
+        back_populates='followers', passive_deletes=True)
     followers: so.WriteOnlyMapped['User'] = so.relationship(
         secondary=followers, primaryjoin=(followers.c.followed_id == id),
         secondaryjoin=(followers.c.follower_id == id),
-        back_populates='following')
+        back_populates='following', passive_deletes=True)
     messages_sent: so.WriteOnlyMapped['Message'] = so.relationship(
-        foreign_keys='Message.sender_id', back_populates='author')
+        foreign_keys='Message.sender_id', back_populates='author', passive_deletes=True)
     messages_received: so.WriteOnlyMapped['Message'] = so.relationship(
-        foreign_keys='Message.recipient_id', back_populates='recipient')
+        foreign_keys='Message.recipient_id', back_populates='recipient', passive_deletes=True)
     notifications: so.WriteOnlyMapped['Notification'] = so.relationship(
-        back_populates='user')
-    tasks: so.WriteOnlyMapped['Task'] = so.relationship(back_populates='user')
+        back_populates='user', passive_deletes=True)
+    tasks: so.WriteOnlyMapped['Task'] = so.relationship(back_populates='user', passive_deletes=True)
 
     def __repr__(self):
         return '<User {}>'.format(self.username)

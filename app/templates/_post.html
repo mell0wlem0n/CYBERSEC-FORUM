@@ -2,7 +2,12 @@
     <tr>
         <td width="70px">
             <a href="{{ url_for('main.user', username=post.author.username) }}">
-                <img src="{{ url_for('static', filename='images/'+current_user.profile_picture) }}" style="border-radius: 50%; height: 70px;width: 70px"/>
+                {% if current_user.profile_picture %}
+                    <img src="{{ url_for('static', filename='images/'+current_user.profile_picture) }}" style="height: 70px;width: 70px; border-radius: 50%" alt="Set a profile picture">
+                {% else %}
+                    <img src="{{ current_user.avatar(10000000) }}" style="height: 70px;width: 70px; border-radius: 50%" alt="Set a profile picture">
+
+                {% endif %}
             </a>
         </td>
         <td>
