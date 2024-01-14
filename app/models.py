@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timezone, timedelta
 from hashlib import md5
 import json
@@ -184,6 +185,10 @@ class User(PaginatedAPIMixin, UserMixin, db.Model):
             .order_by(Post.timestamp.desc())
         )
 
+    def profile_picture_exists(self):
+        if self.profile_picture:
+            return os.path.isfile(os.path.abspath(current_app.config['UPLOAD_FOLDER']+self.profile_picture))
+        return False
     def get_confirmation_token(self, expires_in=3600):
         return jwt.encode({'confirm_email': self.email, 'exp': time() + expires_in}, current_app.config['SECRET_KEY'],
                           algorithm='HS256')

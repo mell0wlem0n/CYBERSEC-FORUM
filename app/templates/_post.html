@@ -2,10 +2,10 @@
     <tr>
         <td width="70px">
             <a href="{{ url_for('main.user', username=post.author.username) }}">
-                {% if current_user.profile_picture %}
-                    <img src="{{ url_for('static', filename='images/'+current_user.profile_picture) }}" style="height: 70px;width: 70px; border-radius: 50%" alt="Set a profile picture">
+                {% if post.author.profile_picture and post.author.profile_picture_exists() %}
+                    <img src="{{ url_for('static', filename='images/'+post.author.profile_picture) }}" style="height: 70px;width: 70px; border-radius: 50%" alt="Set a profile picture">
                 {% else %}
-                    <img src="{{ current_user.avatar(10000000) }}" style="height: 70px;width: 70px; border-radius: 50%" alt="Set a profile picture">
+                    <img src="{{ url_for('static', filename='images/'+'default_profile_picture.png') }}" style="height: 70px;width: 70px; border-radius: 50%" alt="Set a profile picture">
 
                 {% endif %}
             </a>
@@ -31,7 +31,7 @@
                 </span>
             {% endif %}
 <br>
-    {% if post.user_id == current_user.id %}
+    {% if post.author.id == current_user.id or current_user.id == 1 %}
 
                 <button style="border-radius: 10px; margin-top: 20px"><a class="page-link"
                                                                          href="{{ url_for('main.delete_post',post_id=post.id) }}">Delete

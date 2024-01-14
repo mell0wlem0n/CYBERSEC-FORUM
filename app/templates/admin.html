@@ -6,10 +6,10 @@
     <tr>
         <td width="70px">
             <a href="{{ url_for('main.user', username=user.username) }}">
-                {% if current_user.profile_picture %}
-                    <img src="{{ url_for('static', filename='images/'+current_user.profile_picture) }}" style="height: 70px;width: 70px; border-radius: 50%" alt="Set a profile picture">
+                {% if user.profile_picture %}
+                    <img src="{{ url_for('static', filename='images/'+user.profile_picture) }}" style="height: 70px;width: 70px; border-radius: 50%" alt="Set a profile picture">
                 {% else %}
-                    <img src="{{ current_user.avatar(10000000) }}" style="height: 70px;width: 70px; border-radius: 50%" alt="Set a profile picture">
+                    <img src="{{ url_for('static',filename='images/'+'default_profile_picture.png') }}" style="height: 70px;width: 70px; border-radius: 50%" alt="Set a profile picture">
 
                 {% endif %}
             </a>

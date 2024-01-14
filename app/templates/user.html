@@ -4,10 +4,10 @@
     <table class="table table-hover" >
         <tr>
             <td width="256px">
-                {% if current_user.profile_picture %}
-                <img src="{{ url_for('static', filename='images/'+current_user.profile_picture) }}" style="height: 250px;width: 250px; border-radius: 50%" alt="Set a profile picture">
+                {% if user.profile_picture and user.profile_picture_exists() %}
+                <img src="{{ url_for('static', filename='images/'+user.profile_picture) }}" style="height: 250px;width: 250px; border-radius: 50%" alt="Set a profile picture">
                 {% else %}
-                    <img src="{{ current_user.avatar(10000000) }}" style="height: 250px;width: 250px; border-radius: 50%" alt="Set a profile picture">
+                    <img src="{{ url_for('static', filename='images/'+'default_profile_picture.png') }}" style="height: 200px;width: 200px; border-radius: 50%" alt="Set a profile picture">
 
                 {% endif %}
             </td>

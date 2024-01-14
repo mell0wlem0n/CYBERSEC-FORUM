@@ -1,22 +1,60 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>{{ _('Messages') }}</h1>
-    {% for post in messages %}
-        {% include '_post.html' %}
-    {% endfor %}
-    <nav aria-label="Post navigation">
-        <ul class="pagination">
-            <li class="page-item{% if not prev_url %} disabled{% endif %}">
-                <a class="page-link" href="#">
-                    <span aria-hidden="true">&larr;</span> {{ _('Newer messages') }}
-                </a>
-            </li>
-            <li class="page-item{% if not next_url %} disabled{% endif %}">
-                <a class="page-link" href="#">
-                    {{ _('Older messages') }} <span aria-hidden="true">&rarr;</span>
-                </a>
-            </li>
-        </ul>
-    </nav>
+<h1>{{ _('Messages') }}</h1>
+{% for post in messages %}
+<table class="table table-hover">
+    <tr>
+        <td width="70px">
+            <a href="{{ url_for('main.user', username=post.author.username) }}">
+                {% if post.author.profile_picture and post.author.profile_picture_exists() %}
+                    <img src="{{ url_for('static', filename='images/'+post.author.profile_picture) }}"
+                         style="height: 70px;width: 70px; border-radius: 50%" alt="Set a profile picture">
+                {% else %}
+                    <img src="{{ url_for('static', filename='images/'+'default_profile_picture.png') }}"
+                         style="height: 70px;width: 70px; border-radius: 50%" alt="Set a profile picture">
+
+                {% endif %}
+            </a>
+        </td>
+        <td>
+            {% set user_link %}
+            <a class="user_popup" href="{{ url_for('main.user', username=post.author.username) }}">
+                {{ post.author.username }}
+            </a>
+            {% endset %}
+            {{ _('%(username)s said %(when)s',
+                    username=user_link, when=moment(post.timestamp).fromNow()) }}
+            <br>
+            <span id="post{{ post.id }}">{{ post.body|safe }}</span>
+            {% if post.language and post.language != g.locale %}
+                <br><br>
+                <span id="translation{{ post.id }}">
+                    <a href="javascript:translate(
+                                'post{{ post.id }}',
+                                'translation{{ post.id }}',
+                                '{{ post.language }}',
+                                '{{ g.locale }}');">{{ _('Translate') }}</a>
+                </span>
+            {% endif %}
+            <br>
+
+        </td>
+    </tr>
+</table>
+{% endfor %}
+<nav aria-label="Post navigation">
+    <ul class="pagination">
+        <li class="page-item{% if not prev_url %} disabled{% endif %}">
+            <a class="page-link" href="#">
+                <span aria-hidden="true">&larr;</span> {{ _('Newer messages') }}
+            </a>
+        </li>
+        <li class="page-item{% if not next_url %} disabled{% endif %}">
+            <a class="page-link" href="#">
+                {{ _('Older messages') }} <span aria-hidden="true">&rarr;</span>
+            </a>
+        </li>
+    </ul>
+</nav>
 {% endblock %}

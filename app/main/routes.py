@@ -60,6 +60,7 @@ def delete(id):
     user_to_delete = User.query.get_or_404(id)
     user = user_to_delete
     db.session.delete(user_to_delete)
+    db.session.query(Message.query).filter_by(id=id).delete()
     db.session.commit()
     flash(_('User deleted successfully!'))
     send_email(_('[CYBERSEC FORUM] Confirm'),
@@ -131,11 +132,14 @@ def edit_profile():
     if form.validate_on_submit():
         current_user.username = form.username.data
         current_user.about_me = form.about_me.data
-        if (request.files['profile_picture'].filename != ""):
+        if request.files['profile_picture'].filename != "":
+            if current_user.profile_picture_exists():
+                os.remove(os.path.abspath(current_app.config['UPLOAD_FOLDER']+current_user.profile_picture))
             current_user.profile_picture = request.files['profile_picture']
             pic_filename = secure_filename(current_user.profile_picture.filename)
             pic_name = str(uuid.uuid1()) + "_" + pic_filename
             saver = request.files['profile_picture']
+
             current_user.profile_picture = pic_name
             saver.save(os.path.join(current_app.config['UPLOAD_FOLDER'], pic_name))
         db.session.commit()
@@ -177,7 +181,7 @@ def delete_post(post_id):
     if post is None:
         flash(_('Post %(post_id)s not found.', post_id=post_id))
         return redirect('main.index')
-    if post.user_id == current_user.id:
+    if post.user_id == current_user.id or current_user.id == 1:
         db.session.delete(post)
         db.session.commit()
     flash(_('Post %(post_id)s has been deleted.', post_id=post_id))
