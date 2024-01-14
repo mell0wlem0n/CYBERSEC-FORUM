@@ -116,6 +116,7 @@ class User(PaginatedAPIMixin, UserMixin, db.Model):
 
     posts: so.WriteOnlyMapped['Post'] = so.relationship(
         back_populates='author', passive_deletes=True)
+    comments: so.WriteOnlyMapped['Comment'] = so.relationship(back_populates='commenter', passive_deletes=True)
     following: so.WriteOnlyMapped['User'] = so.relationship(
         secondary=followers, primaryjoin=(followers.c.follower_id == id),
         secondaryjoin=(followers.c.followed_id == id),
@@ -187,12 +188,12 @@ class User(PaginatedAPIMixin, UserMixin, db.Model):
 
     def profile_picture_exists(self):
         if self.profile_picture:
-            return os.path.isfile(os.path.abspath(current_app.config['UPLOAD_FOLDER']+self.profile_picture))
+            return os.path.isfile(os.path.abspath(current_app.config['UPLOAD_FOLDER'] + self.profile_picture))
         return False
+
     def get_confirmation_token(self, expires_in=3600):
         return jwt.encode({'confirm_email': self.email, 'exp': time() + expires_in}, current_app.config['SECRET_KEY'],
                           algorithm='HS256')
-
 
     @staticmethod
     def verify_confirm_token(token):
@@ -318,9 +319,22 @@ class Post(SearchableMixin, db.Model):
     language: so.Mapped[Optional[str]] = so.mapped_column(sa.String(5))
 
     author: so.Mapped[User] = so.relationship(back_populates='posts')
+    comments: so.WriteOnlyMapped['Comment'] = so.relationship(back_populates='post', passive_deletes=True)
 
     def __repr__(self):
         return '<Post {}>'.format(self.body)
+
+
+class Comment(db.Model):
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    body: so.Mapped[str] = so.mapped_column(sa.String(140))
+    timestamp: so.Mapped[datetime] = so.mapped_column(
+        index=True, default=lambda: datetime.now(timezone.utc))
+    language: so.Mapped[Optional[str]] = so.mapped_column(sa.String(5))
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
+    commenter: so.Mapped[User] = so.relationship(back_populates='comments')
+    post_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Post.id), index=True)
+    post: so.Mapped['Post'] = so.relationship(back_populates='comments')
 
 
 class Message(db.Model):

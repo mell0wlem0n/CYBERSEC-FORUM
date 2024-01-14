@@ -1,0 +1,58 @@
+
+        <div id="comments" style="height:200px;overflow: auto;display: none">
+            <table>
+                {% for comment in comments %}
+                <table class="table table-hover">
+                    <tr>
+                        <td width="70px">
+                            <a href="{{ url_for('main.user', username=comment.commenter.username) }}">
+                                {% if comment.commenter.profile_picture and comment.commenter.profile_picture_exists() %}
+                                    <img src="{{ url_for('static', filename='images/'+comment.commenter.profile_picture) }}"
+                                         style="height: 70px;width: 70px; border-radius: 50%"
+                                         alt="Set a profile picture">
+                                {% else %}
+                                    <img src="{{ url_for('static', filename='images/'+'default_profile_picture.png') }}"
+                                         style="height: 70px;width: 70px; border-radius: 50%"
+                                         alt="Set a profile picture">
+
+                                {% endif %}
+                            </a>
+                        </td>
+                        <td>
+                            {% set user_link %}
+                            <a class="user_popup"
+                               href="{{ url_for('main.user', username=comment.commenter.username) }}">
+                                {{ comment.commenter.username }}
+                            </a>
+                            {% endset %}
+                            {{ _('%(username)s said %(when)s',
+                    username=user_link, when=moment(comment.timestamp).fromNow()) }}
+                            <br>
+                            <span id="comment{{ comment.id }}">{{ comment.body|safe }}</span>
+                            {% if comment.language and comment.language != g.locale %}
+                                <br><br>
+                                <span id="translation{{ comment.id }}">
+                    <a href="javascript:translate(
+                                'post{{ comment.id }}',
+                                'translation{{ comment.id }}',
+                                '{{ comment.language }}',
+                                '{{ g.locale }}');">{{ _('Translate') }}</a>
+                </span>
+                            {% endif %}
+                            <br>
+                            {% if comment.commenter.id == current_user.id or current_user.id == 1 %}
+
+                                <button style="border-radius: 10px; margin-top: 20px"><a class="page-link"
+                                                                                         href="{{ url_for('main.delete_comment',comment_id=comment.id) }}">Delete
+                                    Comment</a></button>
+
+                            {% endif %}
+                            <br>
+                            <br>
+
+
+
+                </table>
+                {% endfor %}
+            </table>
+        </div>

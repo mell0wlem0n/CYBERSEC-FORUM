@@ -5,19 +5,20 @@ from flask import render_template, flash, redirect, url_for, request, g, \
 from flask_login import current_user, login_required
 from flask_babel import _, get_locale
 import sqlalchemy as sa
-from app.main.forms import FileField
+from app.main.forms import FileField, CommentForm
 from langdetect import detect, LangDetectException
 
 import app
 from app import db
 from app.main.forms import EditProfileForm, EmptyForm, PostForm, SearchForm, \
     MessageForm
-from app.models import User, Post, Message, Notification
+from app.models import User, Post, Message, Notification, Comment
 from app.translate import translate, detect_language
 from app.main import bp
 from werkzeug.utils import secure_filename
 import uuid as uuid
 from app.email import send_email
+
 
 @bp.before_app_request
 def before_request():
@@ -41,33 +42,70 @@ def index():
         db.session.commit()
         flash(_('Your post is now live!'))
         return redirect(url_for('main.index'))
+
     page = request.args.get('page', 1, type=int)
     posts = db.paginate(current_user.following_posts(), page=page,
                         per_page=current_app.config['POSTS_PER_PAGE'],
                         error_out=False)
+    comments = Comment.query.join(Post).where(Comment.post_id == Post.id)
     next_url = url_for('main.index', page=posts.next_num) \
         if posts.has_next else None
     prev_url = url_for('main.index', page=posts.prev_num) \
         if posts.has_prev else None
-    return render_template('index.html', title=_('Home'), form=form,
+    return render_template('index.html', title=_('Home'), form=form, comments=comments,
                            posts=posts.items, next_url=next_url,
                            prev_url=prev_url)
 
+@bp.route('/add_comment/<int:post_id>', methods=['GET', 'POST'])
+@login_required
+def add_comment(post_id):
+    text = request.form.get('text')
+
+    if not text:
+        flash(_('Comment could not be empty'))
+    else:
+        post = Post.query.filter_by(id=post_id)
+        if post:
+            comment = Comment(body=text, commenter=current_user, post_id=post_id, language=detect_language(text))
+            db.session.add(comment)
+            db.session.commit()
+            flash(_('Your comment has been added'))
+        else:
+            flash(_('Post does not exist'))
+
+    return redirect(url_for('main.index'))
+
+@bp.route('/delete_comment/<int:comment_id>', methods=['GET', 'POST'])
+@login_required
+def delete_comment(comment_id):
+    comment_to_delete = Comment.query.filter_by(id=comment_id).first()
+    db.session.delete(comment_to_delete)
+    db.session.commit()
+    return redirect(url_for('main.index'))
 
 @bp.route('/delete/<int:id>')
 @login_required
 def delete(id):
     user_to_delete = User.query.get_or_404(id)
     user = user_to_delete
+    posts = Post.query.all()
+    for post in posts:
+        if post.user_id == id:
+            db.session.delete(post)
+
+    comments = Comment.query.all()
+    for comment in comments:
+        if comment.user_id == id:
+            db.session.delete(comment)
+
     db.session.delete(user_to_delete)
-    db.session.query(Message.query).filter_by(id=id).delete()
     db.session.commit()
     flash(_('User deleted successfully!'))
     send_email(_('[CYBERSEC FORUM] Confirm'),
                sender=current_app.config['ADMINS'][0],
                recipients=[user.email],
-               text_body=render_template('email/deleted_account.txt', user=user_to_delete),
-               html_body=render_template('email/deleted_account.html', user=user_to_delete))
+               text_body=render_template('email/deleted_account.txt', user=user),
+               html_body=render_template('email/deleted_account.html', user=user))
     return redirect(url_for("main.admin"))
 
 
@@ -87,6 +125,7 @@ def admin():
 def explore():
     page = request.args.get('page', 1, type=int)
     query = sa.select(Post).order_by(Post.timestamp.desc())
+    comments = Comment.query.join(Post).where(Comment.post_id == Post.id)
     posts = db.paginate(query, page=page,
                         per_page=current_app.config['POSTS_PER_PAGE'],
                         error_out=False)
@@ -94,8 +133,7 @@ def explore():
         if posts.has_next else None
     prev_url = url_for('main.explore', page=posts.prev_num) \
         if posts.has_prev else None
-    return render_template('index.html', title=_('Explore') \
-                           , posts=posts.items, next_url=next_url,
+    return render_template('index.html', title=_('Explore'), posts=posts.items, next_url=next_url, comments=comments,
                            prev_url=prev_url)
 
 
@@ -113,7 +151,8 @@ def user(username):
     prev_url = url_for('main.user', username=user.username,
                        page=posts.prev_num) if posts.has_prev else None
     form = EmptyForm()
-    return render_template('user.html', user=user, posts=posts.items,
+    comments = Comment.query.filter_by(user_id=current_user.id)
+    return render_template('user.html', user=user, posts=posts.items, comments=comments,
                            next_url=next_url, prev_url=prev_url, form=form)
 
 
@@ -134,7 +173,7 @@ def edit_profile():
         current_user.about_me = form.about_me.data
         if request.files['profile_picture'].filename != "":
             if current_user.profile_picture_exists():
-                os.remove(os.path.abspath(current_app.config['UPLOAD_FOLDER']+current_user.profile_picture))
+                os.remove(os.path.abspath(current_app.config['UPLOAD_FOLDER'] + current_user.profile_picture))
             current_user.profile_picture = request.files['profile_picture']
             pic_filename = secure_filename(current_user.profile_picture.filename)
             pic_name = str(uuid.uuid1()) + "_" + pic_filename

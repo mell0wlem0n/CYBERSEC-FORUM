@@ -3,9 +3,11 @@
         <td width="70px">
             <a href="{{ url_for('main.user', username=post.author.username) }}">
                 {% if post.author.profile_picture and post.author.profile_picture_exists() %}
-                    <img src="{{ url_for('static', filename='images/'+post.author.profile_picture) }}" style="height: 70px;width: 70px; border-radius: 50%" alt="Set a profile picture">
+                    <img src="{{ url_for('static', filename='images/'+post.author.profile_picture) }}"
+                         style="height: 70px;width: 70px; border-radius: 50%" alt="Set a profile picture">
                 {% else %}
-                    <img src="{{ url_for('static', filename='images/'+'default_profile_picture.png') }}" style="height: 70px;width: 70px; border-radius: 50%" alt="Set a profile picture">
+                    <img src="{{ url_for('static', filename='images/'+'default_profile_picture.png') }}"
+                         style="height: 70px;width: 70px; border-radius: 50%" alt="Set a profile picture">
 
                 {% endif %}
             </a>
@@ -30,14 +32,130 @@
                                 '{{ g.locale }}');">{{ _('Translate') }}</a>
                 </span>
             {% endif %}
-<br>
-    {% if post.author.id == current_user.id or current_user.id == 1 %}
+            <br>
+            {% if post.author.id == current_user.id or current_user.id == 1 %}
 
                 <button style="border-radius: 10px; margin-top: 20px"><a class="page-link"
                                                                          href="{{ url_for('main.delete_post',post_id=post.id) }}">Delete
                     post</a></button>
 
-    {% endif %}
+            {% endif %}
+            <br>
+            <br>
+            <button id="add_comment{{ post.id }}" onclick="addComment{{ post.id }}()">Add coment</button>
+            <button id="cancel_add_comment{{ post.id }}" onclick="cancelAddComment()" style="display: none">Cancel</button>
+            <br>
+            {% if post.comments != None %}
+                <button id="showComments{{ post.id }}" onclick="showComments{{ post.id }}()">Show Comments</button>
+                <button id="hideComments{{ post.id }}" onclick="hideComments{{ post.id }}()" style="display: none">Hide Comments</button>
+            {% endif %}
+            <br>
+            <form   style="margin-top: 10px; display: none" id='form{{ post.id }}' method="post" class="input-group"
+                  action="/add_comment/{{ post.id }}" name="form">
+                <textarea id="text{{ post.id }}" name="text" class="form-control"></textarea>
+                <br>
+                <br>
+                <br>
+            </form>
+            <button id="form-button{{ post.id }}"  form="form{{ post.id }}" type='submit' style="border-radius: 10px; margin-top: 20px;display: none">Comment
+            </button>
+            <script>
+                function addComment{{ post.id }}(){
+                    document.getElementById('form{{ post.id }}').style.display='block';
+                    document.getElementById('add_comment{{ post.id }}').style.display='none';
+                    document.getElementById('cancel_add_comment{{ post.id }}').style.display='block';
+                    document.getElementById('form-button{{ post.id }}').style.display='block';
+
+                }
+                function cancelAddComment{{ post.id }}(){
+                    document.getElementById('form{{ post.id }}').style.display='none';
+                    document.getElementById('add_comment{{ post.id }}').style.display='block';
+                    document.getElementById('cancel_add_comment{{ post.id }}').style.display='none';
+                    document.getElementById('form-button{{ post.id }}').style.display='none';
+                }
+            </script>
+            <script>CKEDITOR.replace('text{{ post.id }}', {
+                width: '50%',
+                height: 100
+            });
+
+            </script>
+            <br>
+            <br>
+            <div id="comments{{ post.id }}" style="display: none;overflow: auto;height: 200px">
+                {% for comment in comments %}
+                {% if comment.post_id==post.id %}
+                <table class="table table-hover">
+                    <tr>
+                        <td width="70px">
+                            <a href="{{ url_for('main.user', username=comment.commenter.username) }}">
+                                {% if comment.commenter.profile_picture and comment.commenter.profile_picture_exists() %}
+                                    <img src="{{ url_for('static', filename='images/'+comment.commenter.profile_picture) }}"
+                                         style="height: 70px;width: 70px; border-radius: 50%"
+                                         alt="Set a profile picture">
+                                {% else %}
+                                    <img src="{{ url_for('static', filename='images/'+'default_profile_picture.png') }}"
+                                         style="height: 70px;width: 70px; border-radius: 50%"
+                                         alt="Set a profile picture">
+
+                                {% endif %}
+                            </a>
+                        </td>
+                        <td>
+                            {% set user_link %}
+                            <a class="user_popup"
+                               href="{{ url_for('main.user', username=comment.commenter.username) }}">
+                                {{ comment.commenter.username }}
+                            </a>
+                            {% endset %}
+                            {{ _('%(username)s said %(when)s',
+                    username=user_link, when=moment(comment.timestamp).fromNow()) }}
+                            <br>
+                            <span id="comment{{ comment.post_id }}">{{ comment.body|safe }}</span>
+                            {% if comment.language and comment.language != g.locale %}
+                                <br><br>
+                                <span id="translation{{ comment.id }}">
+                    <a href="javascript:translate(
+                                'post{{ comment.id }}',
+                                'translation{{ comment.id }}',
+                                '{{ comment.language }}',
+                                '{{ g.locale }}');">{{ _('Translate') }}</a>
+                </span>
+                            {% endif %}
+                            <br>
+                            {% if comment.commenter.id == current_user.id or current_user.id == 1 %}
+
+                                <button style="border-radius: 10px; margin-top: 20px"><a class="page-link"
+                                                                                         href="{{ url_for('main.delete_comment',comment_id=comment.id) }}">Delete
+                                    Comment</a></button>
+
+                            {% endif %}
+                            <br>
+                            <br>
+
+
+                </table>
+                {% endif %}
+                {% endfor %}
+            </div>
         </td>
+
+
+        <script>
+            function showComments{{ post.id }}() {
+                document.getElementById('comments{{ post.id }}').style.display = 'block';
+                document.getElementById('showComments{{ post.id }}').style.display = 'none';
+                document.getElementById('hideComments{{ post.id }}').style.display = 'block';
+            }
+
+            function hideComments{{ post.id }}() {
+                document.getElementById('comments{{ post.id }}').style.display = 'none';
+                document.getElementById('showComments{{ post.id }}').style.display = 'block';
+                document.getElementById('hideComments{{ post.id }}').style.display = 'none';
+            }
+        </script>
+
     </tr>
+
+
 </table>
